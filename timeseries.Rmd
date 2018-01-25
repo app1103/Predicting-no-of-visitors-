@@ -1,0 +1,83 @@
+---
+title: "time"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library("forecast")
+tour<-Tourist_stay_in_Country
+class(tour)
+tour<-tour[,c(-1)]
+class(tour)
+```
+
+```{r}
+tstaytimeseries <- ts(tour, frequency=12, start=c(1992,1))
+tstaytimeseries
+```
+
+```{r}
+frequency(tstaytimeseries)
+plot.ts(tstaytimeseries)
+# there is a seasonal pattern in the number of visitors. 
+#there is a peak every summer, and a trough every winter. 
+#again it is an additive time series, as the seasonal fluctuations are roughly constant in size over time 
+```
+```{r}
+class(tstaytimeseries)
+summary(tstaytimeseries)
+```
+```{r}
+plot(tstaytimeseries)
+cycle(tstaytimeseries)
+```
+```{r}
+plot(aggregate(tstaytimeseries,FUN=mean))
+
+```
+```{r}
+ bo<-boxplot(tstaytimeseries~cycle(tstaytimeseries))
+bo$out
+#june,july ,august max visitors
+```
+```{r}
+
+adf.test(diff(log(tstaytimeseries)), alternative="stationary", k=0)
+#We see that the series is stationary enough to do any kind of time series modelling.
+#p value less that 0.05 therefore rejecting null hypothesis
+```
+```{r}
+acf(log(tstaytimeseries))
+```
+```{r}
+pacf(log(tstaytimeseries))
+pacf(diff(log(tstaytimeseries)))
+```
+```{r}
+library(forecast)
+auto.arima(tour)
+library(tsoutliers)
+ outliers <- tso(tstaytimeseries, tsmethod = 'arima',args.tsmethod  = list(order = c(2, 1, 2)))
+plot(outliers)
+outliers$effects
+```
+```{r}
+fit <- arima((tstaytimeseries), c(2, 1, 2),seasonal = list(order = c(2, 1, 2), period = 12))
+```
+
+```{r}
+pred <- predict(fit, n.ahead = 2*12)
+pred$pred
+```
+
+```{r}
+(fit <- arima(log(tstaytimeseries), c(2, 1, 2),seasonal = list(order = c(2, 1, 2), period = 12)))
+ pred <- predict(fit, n.ahead = 2*12)
+ts.plot(tstaytimeseries,2.718^pred$pred, log = "y", lty = c(1,3))
+```
